@@ -25,38 +25,29 @@ from .utils import unique_name
 
 # --- dmx to blender value conversion
 def to_bool(value):
-	if isinstance(value, bool):
-		return bool(value >> 7)
-	else:
-		raise TypeError
+	return bool(value >> 7)
 
 def to_float(value):
-	if isinstance(value, float):
-		return float(value/255)
-	else:
-		raise TypeError
+	return float(value/255)
 
 def to_int(value):
-	if isinstance(value, int):
-		if value >> 8:
-			return value
-		else:
-			if value < 0:
-				return 0
-			elif value > 255:
-				return 255
+	if value >> 8:
+		return value
 	else:
-		raise TypeError
+		if value < 0:
+			return 0
+		elif value > 255:
+			return 255
 
 def convert(attr, value):
-	if isinstance(attr, bpy.types.FloatProperty):
+	if isinstance(attr, float):
 		return to_float(value)
-	elif isinstance(attr, bpy.types.IntProperty):
+	elif isinstance(attr, int):
 		return to_int(value)
-	elif isinstance(attr, bpy.types.BoolProperty):
+	elif isinstance(attr, bool):
 		return to_bool(value)
 	else:
-		raise TypeError("convert: unsupported type works only with float, int, bool")
+		raise TypeError("convert: unsupported type %s, dmx value conversion works only with float, int and bool types"%type(attr))
 
 def write_dmx(target, action, value):
 	if action.use_data:

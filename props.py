@@ -49,12 +49,15 @@ class OLAOSCChannel(bpy.types.PropertyGroup):
 # --- OLAOSCAction: callbacks 
 #
 def callback_context(self, context):
-	pass
+	self.target = ""
 
 def callback_target(self, context):
-	pass
+	self.attr = ""
+	self.min = self.max = 0
 
 def callback_attr(self, context):
+	if not len(self.target) or not len(self.attr):
+		return
 	if self.context == 'ctx_object':
 		target = context.scene.objects[self.target]
 	elif self.context == 'ctx_material':
@@ -66,21 +69,25 @@ def callback_attr(self, context):
 			return
 		op = eval("bpy.ops.%s"%self.target)
 		target = op.get_rna()
-	if not self.use_data:
-		length = target.bl_rna.properties[self.attr].array_length
-		bpy.ops.blive.olaosc_set_attr_arrayidx(length = length)
-	else:
-		length = target.data.bl_rna.properties[self.attr].array_length
-		bpy.ops.blive.olaosc_set_attr_arrayidx(length = length)
+	try:
+		if not self.use_data:
+			length = target.bl_rna.properties[self.attr].array_length
+			bpy.ops.olaosc.set_attr_arrayidx(length = length)
+		else:
+			length = target.data.bl_rna.properties[self.attr].array_length
+			bpy.ops.olaosc.set_attr_arrayidx(length = length)
+	except AttributeError:
+		pass
 
 def callback_minmax(self, context):
 	pass
 
 def callback_channel(self, context):
+	# --- TODO: unpatch
 	pass
 
 def callback_num_channels(self, context):
-	pass
+	# --- TODO: unpatch
 
 #
 # --- OLAOSC Action

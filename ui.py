@@ -177,9 +177,9 @@ class OLAOSC_PT_olaosc(bpy.types.Panel):
 		row = box.row()
 		row.prop(bs, "olaosc_port", text="Port")
 
-		#~ row = box.row()
-		#~ row.operator("olaosc.connect", text="connect")
-		#~ row.operator("olaosc.disconnect", text="disconnect")
+		row = box.row()
+		row.operator("olaosc.connect", text="connect")
+		row.operator("olaosc.disconnect", text="disconnect")
 
 		row = box.row(align=True)
 		if not olaosc.universes:
@@ -201,10 +201,6 @@ class OLAOSC_PT_olaosc(bpy.types.Panel):
 		row.prop(olaosc.universes[olaosc.active_universe], "name", text="name")
 		row = box.row()
 		row.prop(olaosc.universes[olaosc.active_universe], "oscpath", text="osc path")
-
-		row = box.row()
-		row.operator("olaosc.connect", text="connect")
-		row.operator("olaosc.disconnect", text="disconnect")
 
 		universe = olaosc.universes[olaosc.active_universe]
 
