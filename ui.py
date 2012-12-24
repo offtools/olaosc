@@ -21,15 +21,11 @@
 
 import bpy
 
-class BLive_PT_olaosc_patch(bpy.types.Panel):
+class OLAOSC_PT_olaosc(bpy.types.Panel):
 	bl_label = "OLA OSC"
 	bl_space_type = 'PROPERTIES'
 	bl_region_type = 'WINDOW'
 	bl_context = "render"
-
-	@classmethod
-	def poll(self, context):
-		return context.window_manager.blive_settings.use_olaosc
 
 	def draw_box_action_properties(self, box, target, action):
 		row = box.row()
@@ -60,7 +56,7 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 				row.label("step size: %f"%((action.max-action.min)/pow(255,action.num_channels)))
 				row = box.row()
 				row.prop(action, "channel", text="start_channel")
-				#~ row.operator("blive.olaosc_patch", text="patch")
+				#~ row.operator("olaosc.patch", text="patch")
 			elif isinstance(target.bl_rna.properties[action.attr], bpy.types.IntProperty):
 				row = box.row()
 				length = target.bl_rna.properties[action.attr].array_length
@@ -88,9 +84,9 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 	def draw_patch(self, box, action):
 		row = box.row()
 		if not action.is_patched:
-			row.operator("blive.olaosc_patch", text="patch")
+			row.operator("olaosc.patch", text="patch")
 		else:
-			row.operator("blive.olaosc_unpatch", text="unpatch")
+			row.operator("olaosc.unpatch", text="unpatch")
 
 
 	def draw_box_actions(self, context):
@@ -105,7 +101,7 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 			row = box.row()
 			row.label("Add Action and assign a Channel")
 			row = box.row()
-			row.operator("blive.olaosc_add_action", text='add')
+			row.operator("olaosc.add_action", text='add')
 			return
 		row.label("Actions")
 		row = box.row()
@@ -113,8 +109,8 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 		split.template_list(universe, "actions", universe, "active_action", rows=2, maxrows=8)
 
 		col = split.column(align=True)
-		col.operator("blive.olaosc_add_action", text='', icon='ZOOMIN')
-		col.operator("blive.olaosc_del_action", text='', icon='ZOOMOUT')
+		col.operator("olaosc.add_action", text='', icon='ZOOMIN')
+		col.operator("olaosc.del_action", text='', icon='ZOOMOUT')
 
 		# --- box action properties
 		box = layout.box()
@@ -181,13 +177,13 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 		row = box.row()
 		row.prop(bs, "olaosc_port", text="Port")
 
-		row = box.row()
-		row.operator("blive.olaosc_enable", text="connect")
-		row.operator("blive.olaosc_disable", text="disconnect")
+		#~ row = box.row()
+		#~ row.operator("olaosc.connect", text="connect")
+		#~ row.operator("olaosc.disconnect", text="disconnect")
 
 		row = box.row(align=True)
 		if not olaosc.universes:
-			row.operator("blive.olaosc_add_universe", text='add Universe')
+			row.operator("olaosc.add_universe", text='add Universe')
 			return
 
 		# --- box universe
@@ -199,12 +195,16 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 		split.template_list(olaosc, "universes", olaosc, "active_universe", rows=2, maxrows=8)
 
 		col = split.column(align=True)
-		col.operator("blive.olaosc_add_universe", text='', icon='ZOOMIN')
-		col.operator("blive.olaosc_del_universe", text='', icon='ZOOMOUT')
+		col.operator("olaosc.add_universe", text='', icon='ZOOMIN')
+		col.operator("olaosc.del_universe", text='', icon='ZOOMOUT')
 		row = box.row()
 		row.prop(olaosc.universes[olaosc.active_universe], "name", text="name")
 		row = box.row()
 		row.prop(olaosc.universes[olaosc.active_universe], "oscpath", text="osc path")
+
+		row = box.row()
+		row.operator("olaosc.connect", text="connect")
+		row.operator("olaosc.disconnect", text="disconnect")
 
 		universe = olaosc.universes[olaosc.active_universe]
 
@@ -222,9 +222,7 @@ class BLive_PT_olaosc_patch(bpy.types.Panel):
 			self.draw_box_actions(context)
 
 def register():
-	print("olaosc.ui.register")
-	bpy.utils.register_class(BLive_PT_olaosc_patch)
+	bpy.utils.register_class(OLAOSC_PT_olaosc)
 
 def unregister():
-	print("olaosc.ui.unregister")
-	bpy.utils.unregister_class(BLive_PT_olaosc_patch)
+	bpy.utils.unregister_class(OLAOSC_PT_olaosc)

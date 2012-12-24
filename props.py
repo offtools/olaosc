@@ -95,7 +95,7 @@ class OLAOSCAction(bpy.types.PropertyGroup):
 	min = bpy.props.IntProperty(update=callback_minmax)
 	max = bpy.props.IntProperty(update=callback_minmax)
 	channel = bpy.props.IntProperty(default=1, min=1, max=255, update=callback_channel)
-	num_channels = bpy.props.IntProperty(default=1, callback=callback_numchannels)
+	num_channels = bpy.props.IntProperty(default=1, update=callback_num_channels)
 	use_data = bpy.props.BoolProperty(default=False)
 	is_patched = bpy.props.BoolProperty(default=False)
 
@@ -112,7 +112,7 @@ class OLAOSCUniverse(bpy.types.PropertyGroup):
 	"""
 		OLAOSC - dmx universes
 	"""
-	oscpath = bpy.props.StringProperty(update=callback_oscpatch)
+	oscpath = bpy.props.StringProperty(update=callback_oscpath)
 	actions = bpy.props.CollectionProperty(type=OLAOSCAction)
 	patch = bpy.props.CollectionProperty(type=OLAOSCChannel)
 	active_action = bpy.props.IntProperty(default=0)
@@ -147,7 +147,7 @@ def register():
 	bpy.utils.register_class(OLAOSCSettings)
 
 	bpy.types.Scene.olaosc = bpy.props.PointerProperty(type=OLAOSC)
-	bpy.types.window_manager.olaosc_settings = bpy.props.PointerProperty(type=OLAOSCSettings)
+	bpy.types.WindowManager.olaosc_settings = bpy.props.PointerProperty(type=OLAOSCSettings)
 
 def unregister():
 	bpy.utils.unregister_class(OLAOSCSettings)

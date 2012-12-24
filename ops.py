@@ -20,8 +20,8 @@
 # Script copyright (C) 2012 Thomas Achtner (offtools)
 
 import bpy
-from .network import ServerInstance
-from .utils.utils import unique_name
+from .network import InitServer, ServerInstance
+from .utils import unique_name
 
 # --- dmx to blender value conversion
 def to_bool(value):
@@ -106,15 +106,15 @@ class OLAOSC_OT_olaosc_connect(bpy.types.Operator):
 	"""
 		OLAOSC Operator - connect
 	"""
-	bl_idname = "blive.olaosc_connect"
+	bl_idname = "olaosc.connect"
 	bl_label = "OLAOSC - connect olaosc"
 
 	def execute(self, context):
 		port = context.window_manager.olaosc_settings.port
 		ip = context.window_manager.olaosc_settings.ip
 		try:
-			server = ServerInstance()(ip, port)
-			print(server)
+			InitServer(ip, port)
+			print(ServerInstance())
 		except OSError as err:
 			print("OLA OSC: ", err)
 		return{'FINISHED'}
@@ -123,7 +123,7 @@ class OLAOSC_OT_olaosc_disconnect(bpy.types.Operator):
 	"""
 		OLAOSC Operator - disconnect
 	"""
-	bl_idname = "blive.olaosc_disconnect"
+	bl_idname = "olaosc.disconnect"
 	bl_label = "OLAOSC - disconnect olaosc "
 
 	def execute(self, context):
@@ -135,7 +135,7 @@ class OLAOSC_OT_olaosc_set_attr_arrayidx(bpy.types.Operator):
 	"""
 		Operator - set array idx enum
 	"""
-	bl_idname = "blive.olaosc_set_attr_arrayidx"
+	bl_idname = "olaosc.set_attr_arrayidx"
 	bl_label = "OLAOSC - set attr arrayidx"
 	length = bpy.props.IntProperty()
 
@@ -145,42 +145,11 @@ class OLAOSC_OT_olaosc_set_attr_arrayidx(bpy.types.Operator):
 			bpy.types.OLAOSCAction.attr_idx = bpy.props.EnumProperty(name="attr_idx", items=gen)
 		return{'FINISHED'}
 
-class OLAOSC_OT_olaosc_add_universe(bpy.types.Operator):
-	"""
-		Operator - add dmx universe
-	"""
-	bl_idname = "blive.olaosc_add_universe"
-	bl_label = "OLAOSC - add dmx universe "
-
-	def execute(self, context):
-		global server
-		olaosc = context.scene.olaosc
-		u = olaosc.universes.add()
-		u.name = unique_name(olaosc.universes, "Universe")
-		u.oscpath = "/dmx/universe/%d"%len(olaosc.universes)
-		olaosc.active_by_name = u.name
-
-		return{'FINISHED'}
-
-class OLAOSC_OT_olaosc_del_universe(bpy.types.Operator):
-	"""
-		Operator - delete dmx universe  
-	"""
-	bl_idname = "blive.olaosc_del_universe"
-	bl_label = "OLAOSC - remove dmx universe "
-
-# TODO: del msghandler
-	def execute(self, context):
-		olaosc = context.scene.olaosc
-		active = olaosc.active_universe
-		olaosc.universes.remove(active)
-		return{'FINISHED'}
-
 class OLAOSC_OT_olaosc_add_msghandler(bpy.types.Operator):
 	"""
 		Operator - add osc message handler
 	"""
-	bl_idname = "blive.olaosc_add_msghandler"
+	bl_idname = "olaosc.add_msghandler"
 	bl_label = "OLAOSC - add osc message handler"
 	oscpath = bpy.props.StringProperty()
 
@@ -195,7 +164,7 @@ class OLAOSC_OT_olaosc_del_msghandler(bpy.types.Operator):
 	"""
 		Operator - del osc message handler
 	"""
-	bl_idname = "blive.olaosc_del_msghandler"
+	bl_idname = "olaosc.del_msghandler"
 	bl_label = "OLAOSC - del osc message handler"
 	oscpath = bpy.props.StringProperty()
 
@@ -206,11 +175,44 @@ class OLAOSC_OT_olaosc_del_msghandler(bpy.types.Operator):
 		else:
 			return{'CANCELLED'}
 
+class OLAOSC_OT_olaosc_add_universe(bpy.types.Operator):
+	"""
+		Operator - add dmx universe
+	"""
+	bl_idname = "olaosc.add_universe"
+	bl_label = "OLAOSC - add dmx universe "
+
+	def execute(self, context):
+		global server
+		olaosc = context.scene.olaosc
+		universe = olaosc.universes.add()
+		universe.name = unique_name(olaosc.universes, "Universe")
+		universe.oscpath = "/dmx/universe/%d"%len(olaosc.universes)
+		olaosc.active_by_name = universe.name
+		bpy.ops.olaosc.add_msghandler(oscpath=universe.oscpath)
+		return{'FINISHED'}
+
+class OLAOSC_OT_olaosc_del_universe(bpy.types.Operator):
+	"""
+		Operator - delete dmx universe  
+	"""
+	bl_idname = "olaosc.del_universe"
+	bl_label = "OLAOSC - remove dmx universe "
+
+# TODO: del msghandler
+	def execute(self, context):
+		olaosc = context.scene.olaosc
+		active = olaosc.active_universe
+		universe = olaosc.universes[active]
+		bpy.ops.del_msghandler(oscpath=universe.oscpath)
+		olaosc.universes.remove(active)
+		return{'FINISHED'}
+
 class OLAOSC_OT_olaosc_add_action(bpy.types.Operator):
 	"""
 		Operator - olaosc create new action
 	"""
-	bl_idname = "blive.olaosc_add_action"
+	bl_idname = "olaosc.add_action"
 	bl_label = "OLAOSC - olaosc add action"
 
 # TODO: add msghandler
@@ -227,7 +229,7 @@ class OLAOSC_OT_olaosc_del_action(bpy.types.Operator):
 	"""
 		Operator - olaosc delete action
 	"""
-	bl_idname = "blive.olaosc_del_action"
+	bl_idname = "olaosc.del_action"
 	bl_label = "OLAOSC - olaosc delete action"
 
 	def execute(self, context):
@@ -245,7 +247,7 @@ class OLAOSC_OT_olaosc_patch(bpy.types.Operator):
 	"""
 		Operator - olaosc patch channel
 	"""
-	bl_idname = "blive.olaosc_patch"
+	bl_idname = "olaosc.patch"
 	bl_label = "OLAOSC - olaosc patch channel"
 
 	def execute(self, context):
@@ -273,7 +275,7 @@ class OLAOSC_OT_olaosc_unpatch(bpy.types.Operator):
 	"""
 		Operator - olaosc unpatch channel
 	"""
-	bl_idname = "blive.olaosc_unpatch"
+	bl_idname = "olaosc.unpatch"
 	bl_label = "OLAOSC - olaosc unpatch channel"
 
 	def execute(self, context):
@@ -292,8 +294,8 @@ class OLAOSC_OT_olaosc_unpatch(bpy.types.Operator):
 
 def register():
 	print("olaosc.ops.register")
-	bpy.utils.register_class(OLAOSC_OT_olaosc_enable)
-	bpy.utils.register_class(OLAOSC_OT_olaosc_disable)
+	bpy.utils.register_class(OLAOSC_OT_olaosc_connect)
+	bpy.utils.register_class(OLAOSC_OT_olaosc_disconnect)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_set_attr_arrayidx)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_add_msghandler)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_del_msghandler)

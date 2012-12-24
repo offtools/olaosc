@@ -41,3 +41,8 @@ server = None
 def ServerInstance():
 	global server
 	return server
+
+def InitServer(ip, port):
+	global server
+	server = OLAOSCServer(ip, port)
+	return server
