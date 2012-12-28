@@ -28,22 +28,22 @@ class OLAOSC_PT_olaosc(bpy.types.Panel):
 	bl_context = "render"
 
 	def draw_box_action_properties(self, box, target, action):
-		row = box.row()
-		row.prop_search(action, "attr", target.bl_rna, "properties", text='Attribute', icon='VIEWZOOM')
+		if hasattr(action, "property"):
+			row = box.row()
+			row.prop(action, "property")
 
-		if action.attr:
-			if isinstance(target.bl_rna.properties[action.attr], bpy.types.BoolProperty):
+			if isinstance(target.bl_rna.properties[action.property], bpy.types.BoolProperty):
 				row = box.row()
 				row.label("BoolProperty")
 				row = box.row()
 				row.prop(action, "channel", text="start channel")
-			elif isinstance(target.bl_rna.properties[action.attr], bpy.types.FloatProperty):
+			elif isinstance(target.bl_rna.properties[action.property], bpy.types.FloatProperty):
 				row = box.row()
-				length = target.bl_rna.properties[action.attr].array_length
+				length = target.bl_rna.properties[action.property].array_length
 				if length:
 					row = box.row()
 					row.label("Array of FloatProperty: %d"%(length))
-					row.prop(action, "attr_idx", text="")
+					row.prop(action, "property_idx", text="")
 				else:
 					row = box.row()
 					row.label("FloatProperty")
@@ -56,14 +56,13 @@ class OLAOSC_PT_olaosc(bpy.types.Panel):
 				row.label("step size: %f"%((action.max-action.min)/pow(255,action.num_channels)))
 				row = box.row()
 				row.prop(action, "channel", text="start_channel")
-				#~ row.operator("olaosc.patch", text="patch")
-			elif isinstance(target.bl_rna.properties[action.attr], bpy.types.IntProperty):
+			elif isinstance(target.bl_rna.properties[action.property], bpy.types.IntProperty):
 				row = box.row()
-				length = target.bl_rna.properties[action.attr].array_length
+				length = target.bl_rna.properties[action.property].array_length
 				if length:
 					row = box.row()
 					row.label("Array of IntProperty: %d"%(length))
-					row.prop(action, "attr_idx")
+					row.prop(action, "property_idx")
 				else:
 					row = box.row()
 					row.label("IntProperty")
@@ -76,7 +75,7 @@ class OLAOSC_PT_olaosc(bpy.types.Panel):
 				row = box.row()
 				row.label("unable to patch this value")
 
-		if not len(action.attr) and action.context == 'ctx_operator':
+		if not hasattr(action, "property") and action.context == 'ctx_operator':
 			row = box.row()
 			row.prop(action, "channel", text="start channel")
 			return

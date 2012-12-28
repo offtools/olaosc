@@ -39,25 +39,25 @@ def to_int(value):
 		elif value > 255:
 			return 255
 
-def convert(attr, value):
-	if isinstance(attr, float):
+def convert(prop, value):
+	if isinstance(prop, float):
 		return to_float(value)
-	elif isinstance(attr, int):
+	elif isinstance(prop, int):
 		return to_int(value)
-	elif isinstance(attr, bool):
+	elif isinstance(prop, bool):
 		return to_bool(value)
 	else:
-		raise TypeError("convert: unsupported type %s, dmx value conversion works only with float, int and bool types"%type(attr))
+		raise TypeError("convert: unsupported type %s, dmx value conversion works only with float, int and bool types"%type(prop))
 
 def write_dmx(target, action, value):
 	if action.use_data:
 		target = target.data
-	if hasattr(action, "attr_idx"):
-		prop = getattr(target, action.attr)
-		prop[int(action.attr_idx)] = convert(prop[int(action.attr_idx)], value)
+	if hasattr(action, "property_idx"):
+		prop = getattr(target, action.property)
+		prop[int(action.property_idx)] = convert(prop[int(action.property_idx)], value)
 	else:
-		value = convert(getattr(target, action.attr))
-		setattr(target, action.attr, value)
+		value = convert(getattr(target, action.property))
+		setattr(target, action.property, value)
 
 def callback_rcv_dmx(path, tags, args, source):
 	data = args[0]
@@ -82,13 +82,13 @@ def callback_rcv_dmx(path, tags, args, source):
 			# --- Operator
 			if action.context == "ctx_operator":
 				op = eval("bpy.ops.%s"%action.target)
-				if not hasattr(action, "attr_idx"):
+				if not hasattr(action, "property_idx"):
 					op()
 				else:
 					rna = op.get_rna()
-					if action.attr in rna.properties.keys():
-						#~ print("bpy.ops.%s(%s=%s)"%(action.target,action.attr,value))
-						eval("bpy.ops.%s(%s=%s)"%(action.target,action.attr,value))
+					if action.property in rna.properties.keys():
+						#~ print("bpy.ops.%s(%s=%s)"%(action.target,action.property,value))
+						eval("bpy.ops.%s(%s=%s)"%(action.target,action.property,value))
 
 			# --- write dmx value to patch
 			patch[key].value = value
@@ -122,18 +122,18 @@ class OLAOSC_OT_olaosc_disconnect(bpy.types.Operator):
 			ServerInstance().close()
 		return{'FINISHED'}
 
-class OLAOSC_OT_olaosc_set_attr_arrayidx(bpy.types.Operator):
+class OLAOSC_OT_olaosc_property_array_index(bpy.types.Operator):
 	"""
 		Operator - set array idx enum
 	"""
-	bl_idname = "olaosc.set_attr_arrayidx"
-	bl_label = "OLAOSC - set attr arrayidx"
+	bl_idname = "olaosc.property_array_index"
+	bl_label = "OLAOSC - set property arrayidx"
 	length = bpy.props.IntProperty()
 
 	def execute(self, context):
 		if self.length:
 			gen = [ (str(i),str(i),'') for i in range(self.length) ]
-			bpy.types.OLAOSCAction.attr_idx = bpy.props.EnumProperty(name="attr_idx", items=gen)
+			bpy.types.OLAOSCAction.property_idx = bpy.props.EnumProperty(name="property_idx", items=gen)
 		return{'FINISHED'}
 
 class OLAOSC_OT_olaosc_add_msghandler(bpy.types.Operator):
@@ -281,13 +281,14 @@ class OLAOSC_OT_olaosc_unpatch(bpy.types.Operator):
 			if "%s"%chan in universe.patch:
 				universe.patch.remove(universe.patch.keys().index("%s"%chan))
 				action.is_patched = False
-				return{'CANCELLED'}
+				return{'FINISHED'}
+		return{'CANCELLED'}
 
 def register():
 	print("olaosc.ops.register")
 	bpy.utils.register_class(OLAOSC_OT_olaosc_connect)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_disconnect)
-	bpy.utils.register_class(OLAOSC_OT_olaosc_set_attr_arrayidx)
+	bpy.utils.register_class(OLAOSC_OT_olaosc_property_array_index)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_add_msghandler)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_del_msghandler)
 	bpy.utils.register_class(OLAOSC_OT_olaosc_add_universe)
@@ -301,7 +302,7 @@ def unregister():
 	print("olaosc.ops.unregister")
 	bpy.utils.unregister_class(OLAOSC_OT_olaosc_connect)
 	bpy.utils.unregister_class(OLAOSC_OT_olaosc_disconnect)
-	bpy.utils.unregister_class(OLAOSC_OT_olaosc_set_attr_arrayidx)
+	bpy.utils.unregister_class(OLAOSC_OT_olaosc_property_array_index)
 	bpy.utils.unregister_class(OLAOSC_OT_olaosc_add_universe)
 	bpy.utils.unregister_class(OLAOSC_OT_olaosc_del_universe)
 	bpy.utils.unregister_class(OLAOSC_OT_olaosc_add_msghandler)

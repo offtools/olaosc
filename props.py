@@ -16,7 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-
+ 
 # Script copyright (C) 2012 Thomas Achtner (offtools)
 
 # --- Properties to receive dmx data via OSC (OLA OSC plugin)
@@ -31,9 +31,9 @@ PatchEditMode = (('channels','Channels','List Actions'),
 				)
 
 ActionContext = (('ctx_object','Object','Object'),
-					('ctx_material','Material','Material'),
-					('ctx_texture', 'Texture', 'Texture'),
-					('ctx_operator','Operator','Operator')
+				('ctx_material','Material','Material'),
+				('ctx_texture', 'Texture', 'Texture'),
+				('ctx_operator','Operator','Operator')
 				)
 
 
@@ -51,33 +51,39 @@ class OLAOSCChannel(bpy.types.PropertyGroup):
 def callback_context(self, context):
 	self.target = ""
 
-def callback_target(self, context):
-	self.attr = ""
-	self.min = self.max = 0
 
 def callback_attr(self, context):
-	if not len(self.target) or not len(self.attr):
+	target = self.get_target()
+	if not target:
 		return
-	if self.context == 'ctx_object':
-		target = context.scene.objects[self.target]
-	elif self.context == 'ctx_material':
-		target = bpy.data.materials[self.target]
-	elif self.context == 'ctx_texture':
-		target = bpy.data.textures[self.target]
-	elif self.context == 'ctx_operator':
-		if not len(self.attr):
-			return
-		op = eval("bpy.ops.%s"%self.target)
-		target = op.get_rna()
+
 	try:
 		if not self.use_data:
-			length = target.bl_rna.properties[self.attr].array_length
-			bpy.ops.olaosc.set_attr_arrayidx(length = length)
+			length = target.bl_rna.properties[self.property].array_length
+			bpy.ops.olaosc.property_array_index(length = length)
 		else:
-			length = target.data.bl_rna.properties[self.attr].array_length
-			bpy.ops.olaosc.set_attr_arrayidx(length = length)
+			length = target.data.bl_rna.properties[self.property].array_length
+			bpy.ops.olaosc.property_array_index(length = length)
 	except AttributeError:
 		pass
+
+def callback_target(self, context):
+	if hasattr(self, "property"):
+		del bpy.types.OLAOSCAction.property 
+	self.min = self.max = 0
+	target = self.get_target()
+	if not target:
+		return
+
+	if self.use_data:
+		target = target.data
+
+	gen = list()
+	for key in target.bl_rna.properties.keys():
+		if isinstance(target.bl_rna.properties[key], (bpy.types.FloatProperty, bpy.types.IntProperty, bpy.types.BoolProperty)):
+			gen.append((key,key,''))
+	if len(gen):
+		bpy.types.OLAOSCAction.property = bpy.props.EnumProperty(name="property", items=gen, update=callback_attr)
 
 def callback_minmax(self, context):
 	pass
@@ -88,23 +94,39 @@ def callback_channel(self, context):
 
 def callback_num_channels(self, context):
 	# --- TODO: unpatch
+	pass
 
 #
 # --- OLAOSC Action
 #
+# TODO: make property dynamic (just bool, float, int)
 class OLAOSCAction(bpy.types.PropertyGroup):
 	"""
 		OLAOSC - defines a action which is called on receiving a certain channel 
 	"""
 	context = bpy.props.EnumProperty(name="context",items=ActionContext,update=callback_context)
 	target = bpy.props.StringProperty(update=callback_target)
-	attr = bpy.props.StringProperty(update=callback_attr) 
 	min = bpy.props.IntProperty(update=callback_minmax)
 	max = bpy.props.IntProperty(update=callback_minmax)
 	channel = bpy.props.IntProperty(default=1, min=1, max=255, update=callback_channel)
 	num_channels = bpy.props.IntProperty(default=1, update=callback_num_channels)
-	use_data = bpy.props.BoolProperty(default=False)
+	use_data = bpy.props.BoolProperty(default=False, update=callback_target)
 	is_patched = bpy.props.BoolProperty(default=False)
+
+	def get_target(self):
+		if not self.target:
+			return None
+		if self.context == 'ctx_object':
+			return bpy.context.scene.objects[self.target]
+		elif self.context == 'ctx_material':
+			return bpy.data.materials[self.target]
+		elif self.context == 'ctx_texture':
+			return bpy.data.textures[self.target]
+		elif self.context == 'ctx_operator':
+			op = eval("bpy.ops.%s"%self.target)
+			return op.get_rna()
+		else:
+			return None
 
 #
 # --- OLAOSCUniverse: callbacks 
